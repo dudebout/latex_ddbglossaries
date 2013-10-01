@@ -1,0 +1,233 @@
+\ProvidesPackage{ddbglossaries}
+
+\RequirePackage{glossaries}
+
+\define@key{glossentry}{acronymarticle}{%
+  \def\@glo@artcl@acr{#1}%
+}
+
+\define@key{glossentry}{definitionarticle}{%
+  \def\@glo@artcl@def{#1}%
+}
+
+\newcommand*{\glsentryartclacr}[1]{\csname glo@#1@artcl@acr\endcsname}
+\newcommand*{\Glsentryartclacr}[1]{%
+\protected@edef\@glo@text{\csname glo@#1@artcl@acr\endcsname}%
+\expandafter\makefirstuc\expandafter{\@glo@text}}
+
+\newcommand*{\glsentryartcldef}[1]{\csname glo@#1@artcl@def\endcsname}
+\newcommand*{\Glsentryartcldef}[1]{%
+\protected@edef\@glo@text{\csname glo@#1@artcl@def\endcsname}%
+\expandafter\makefirstuc\expandafter{\@glo@text}}
+
+\newrobustcmd*{\glsartcl}{\@ifstar\@sglsartcl\@glsartcl}
+\newcommand*{\@sglsartcl}[1][]{\@glsartcl[hyper=false,#1]}
+\newcommand*{\@glsartcl}[2][]{%
+\new@ifnextchar[{\@glsartcl@{#1}{#2}}{\@glsartcl@{#1}{#2}[]}}
+\def\@glsartcl@#1#2[#3]{%
+\glsdoifexists{#2}{%
+\ifglsused{#2}%
+{\glsentryartclacr{#2} \gls[#1]{#2}}%
+{\glsentryartcldef{#2} \gls[#1]{#2}}%
+}%
+}
+
+\newrobustcmd*{\Glsartcl}{\@ifstar\@sGlsartcl\@Glsartcl}
+\newcommand*{\@sGlsartcl}[1][]{\@Glsartcl[hyper=false,#1]}
+\newcommand*{\@Glsartcl}[2][]{%
+\new@ifnextchar[{\@Glsartcl@{#1}{#2}}{\@Glsartcl@{#1}{#2}[]}}
+\def\@Glsartcl@#1#2[#3]{%
+\glsdoifexists{#2}{%
+\ifglsused{#2}%
+{\Glsentryartclacr{#2} \gls[#1]{#2}}%
+{\Glsentryartcldef{#2} \gls[#1]{#2}}%
+}%
+}
+
+\renewrobustcmd{\newglossaryentry}[2]{%
+  \glsdoifnoexists{#1}%
+  {%
+    \def\@glo@label{#1}%
+    \let\@glo@name\@glsnoname
+    \def\@glo@desc{%
+      \PackageError{glossaries}
+      {%
+        description key required in \string\newglossaryentry\space
+        for entry `\@glo@label'%
+      }%
+      {%
+        You haven't specified the entry description%
+      }%
+    }%
+    \def\@glo@descplural{\@glo@desc}%
+    \def\@glo@type{\glsdefaulttype}%
+    \def\@glo@symbol{\relax}%
+    \def\@glo@symbolplural{\@glo@symbol}%
+    \def\@glo@text{\@glo@name}%
+    \let\@glo@plural\@glsdefaultplural
+    \let\@glo@first\relax
+    \let\@glo@firstplural\relax
+    \let\@glo@sort\@glsdefaultsort
+    \def\@glo@counter{\@gls@getcounter{\@glo@type}}%
+    \def\@glo@see{}%
+    \def\@glo@parent{}%
+    \def\@glo@prefix{}%
+    \def\@glo@useri{}%
+    \def\@glo@userii{}%
+    \def\@glo@useriii{}%
+    \def\@glo@useriv{}%
+    \def\@glo@userv{}%
+    \def\@glo@uservi{}%
+    \def\@glo@artcl@acr{a}%
+    \def\@glo@artcl@def{a}%
+    \def\@glo@short{}%
+    \def\@glo@shortpl{}%
+    \def\@glo@long{}%
+    \def\@glo@longpl{}%
+    \@newglossaryentryprehook
+    \setkeys{glossentry}{#2}%
+    \ifcsundef{glolist@\@glo@type}%
+    {%
+      \PackageError{glossaries}%
+      {Glossary type '\@glo@type' has not been defined}%
+      {You need to define a new glossary type, before making entries
+       in it}%
+    }%
+    {%
+      \protected@edef\@glolist@{\csname glolist@\@glo@type\endcsname}%
+      \expandafter\xdef\csname glolist@\@glo@type\endcsname{\@glolist@{#1},}%
+    }%
+    \gls@level=0\relax
+    \ifx\@glo@parent\@empty
+      \expandafter\gdef\csname glo@#1@parent\endcsname{}%
+    \else
+      \ifthenelse{\equal{#1}{\@glo@parent}}%
+      {%
+        \PackageError{glossaries}{Entry `#1' can't be its own parent}{}%
+        \def\@glo@parent{}%
+        \expandafter\gdef\csname glo@#1@parent\endcsname{}%
+      }%
+      {%
+        \ifglsentryexists{\@glo@parent}%
+        {%
+          \expandafter\xdef\csname glo@#1@parent\endcsname{\@glo@parent}%
+          \gls@level=\csname glo@\@glo@parent @level\endcsname\relax
+          \advance\gls@level by 1\relax
+          \ifx\@glo@name\@glsnoname
+            \expandafter\let\expandafter\@glo@name
+               \csname glo@\@glo@parent @name\endcsname
+            \ifx\@glo@plural\@glsdefaultplural
+              \expandafter\let\expandafter\@glo@plural
+                 \csname glo@\@glo@parent @plural\endcsname
+            \fi
+          \fi
+        }%
+        {%
+          \PackageError{glossaries}%
+          {%
+            Invalid parent `\@glo@parent'
+            for entry `#1' - parent doesn't exist%
+          }%
+          {%
+            Parent entries must be defined before their children%
+          }%
+          \def\@glo@parent{}%
+          \expandafter\gdef\csname glo@#1@parent\endcsname{}%
+        }%
+      }%
+    \fi
+    \expandafter\xdef\csname glo@#1@level\endcsname{\number\gls@level}%
+    \ifx\relax\@glo@firstplural
+       \ifx\relax\@glo@first
+          \def\@glo@firstplural{\@glo@plural}%
+          \def\@glo@first{\@glo@text}%
+       \else
+          \def\@glo@firstplural{\@glo@first\glspluralsuffix}%
+       \fi
+    \else
+       \ifx\relax\@glo@first
+          \def\@glo@first{\@glo@text}%
+       \fi
+    \fi
+    \expandafter
+      \protected@xdef\csname glo@#1@text\endcsname{\@glo@text}%
+    \expandafter
+      \protected@xdef\csname glo@#1@plural\endcsname{\@glo@plural}%
+    \expandafter
+      \protected@xdef\csname glo@#1@first\endcsname{\@glo@first}%
+    \expandafter
+      \protected@xdef\csname glo@#1@firstpl\endcsname{\@glo@firstplural}%
+    \expandafter
+      \protected@xdef\csname glo@#1@type\endcsname{\@glo@type}%
+    \expandafter
+      \protected@xdef\csname glo@#1@counter\endcsname{\@glo@counter}%
+    \expandafter
+      \protected@xdef\csname glo@#1@useri\endcsname{\@glo@useri}%
+    \expandafter
+      \protected@xdef\csname glo@#1@userii\endcsname{\@glo@userii}%
+    \expandafter
+      \protected@xdef\csname glo@#1@useriii\endcsname{\@glo@useriii}%
+    \expandafter
+      \protected@xdef\csname glo@#1@useriv\endcsname{\@glo@useriv}%
+    \expandafter
+      \protected@xdef\csname glo@#1@userv\endcsname{\@glo@userv}%
+    \expandafter
+      \protected@xdef\csname glo@#1@uservi\endcsname{\@glo@uservi}%
+    \expandafter
+      \protected@xdef\csname glo@#1@artcl@acr\endcsname{\@glo@artcl@acr}%
+    \expandafter
+      \protected@xdef\csname glo@#1@artcl@def\endcsname{\@glo@artcl@def}%
+    \expandafter
+      \protected@xdef\csname glo@#1@short\endcsname{\@glo@short}%
+    \expandafter
+      \protected@xdef\csname glo@#1@shortpl\endcsname{\@glo@shortpl}%
+    \expandafter
+      \protected@xdef\csname glo@#1@long\endcsname{\@glo@long}%
+    \expandafter
+      \protected@xdef\csname glo@#1@longpl\endcsname{\@glo@longpl}%
+    \@gls@sanitizename
+    \expandafter\protected@xdef\csname glo@#1@name\endcsname{\@glo@name}%
+    \ifcsundef{glo@#1@numberlist}%
+    {%
+      \csxdef{glo@#1@numberlist}{\noexpand\@gls@missingnumberlist{\@glo@label}}%
+    }%
+    {}%
+    \def\@glo@@desc{\@glo@first}%
+    \ifx\@glo@desc\@glo@@desc
+      \let\@glo@desc\@glo@first
+    \fi
+    \@gls@sanitizedesc
+    \expandafter\protected@xdef\csname glo@#1@desc\endcsname{\@glo@desc}%
+    \expandafter\protected@xdef\csname glo@#1@descplural\endcsname{\@glo@descplural}%
+    \@gls@defsort{\@glo@type}{#1}%
+    \def\@glo@@symbol{\@glo@text}%
+    \ifx\@glo@symbol\@glo@@symbol
+      \let\@glo@symbol\@glo@text
+    \fi
+    \@gls@sanitizesymbol
+    \expandafter\protected@xdef\csname glo@#1@symbol\endcsname{\@glo@symbol}%
+    \expandafter\protected@xdef\csname glo@#1@symbolplural\endcsname{\@glo@symbolplural}%
+    \expandafter\gdef\csname glo@#1@flagfalse\endcsname{%
+      \expandafter\global\expandafter
+        \let\csname ifglo@#1@flag\endcsname\iffalse
+    }%
+    \expandafter\gdef\csname glo@#1@flagtrue\endcsname{%
+      \expandafter\global\expandafter
+      \let\csname ifglo@#1@flag\endcsname\iftrue
+    }%
+    \csname glo@#1@flagfalse\endcsname
+    \ifx\@glo@see\@empty
+    \else
+      \protected@edef\@do@glssee{%
+        \noexpand\@gls@fixbraces\noexpand\@glo@list\@glo@see
+          \noexpand\@nil
+        \noexpand\expandafter\noexpand\@glssee\noexpand\@glo@list{#1}}%
+      \@do@glssee
+    \fi
+  }%
+  \do@glo@storeentry{#1}%
+  \@newglossaryentryposthook
+}
+
+\newcommand{\aac}{\glsartcl}
+\newcommand{\Aac}{\Glsartcl}
